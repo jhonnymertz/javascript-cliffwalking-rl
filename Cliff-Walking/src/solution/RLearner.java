@@ -45,12 +45,12 @@ public class RLearner {
     public void runTrial() {
         System.out.println("Learning! (" + episodes + " episodes)\n");
         for (int i = 0; i < episodes; i++) {
-            runEpisode();
+            System.out.println(runEpisode() + " passos");
         }
     }
 
     // execute one epoch
-    public void runEpisode() {
+    public int runEpisode() {
 
         // Reset state to start position defined by the world.
 
@@ -59,6 +59,8 @@ public class RLearner {
         double this_Q;
         double max_Q;
         double new_Q;
+
+        int steps = 0;
 
         while (!thisWorld.endState(state)) {
 
@@ -75,7 +77,10 @@ public class RLearner {
 
             // Set state to the new state.
             state = newstate;
+            steps++;
         }
+
+        return steps;
     } // runEpisode
 
     private int selectAction(int[] state) {
@@ -117,14 +122,14 @@ public class RLearner {
 
                 // Select random action if all qValues == 0 or exploring.
                 if (selectedAction == -1) {
-                    System.out.println("Exploring ...");
+                    //System.out.println("Exploring ...");
                     selectedAction = (int) (Math.random() * qValues.length);
                 }
 
                 // Choose new action if not valid.
                 while (!thisWorld.validAction(state, selectedAction)) {
                     selectedAction = (int) (Math.random() * qValues.length);
-                    System.out.println("Invalid action, new one:" + selectedAction);
+                    //System.out.println("Invalid action, new one:" + selectedAction);
                 }
 
                 break;
@@ -156,7 +161,7 @@ public class RLearner {
                         if (rndValue > offset && rndValue < offset + prob[action])
                             selectedAction = action;
                         offset += prob[action];
-                        System.out.println("Action " + action + " chosen with " + prob[action]);
+                        //System.out.println("Action " + action + " chosen with " + prob[action]);
                     }
 
                     if (thisWorld.validAction(state, selectedAction))

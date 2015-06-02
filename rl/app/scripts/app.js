@@ -16,7 +16,8 @@ angular
     'ngRoute',
     'ngSanitize',
     'ngTouch',
-    'highcharts-ng'
+    'highcharts-ng',
+    'rlApp.learner'
   ])
   .config(function ($routeProvider) {
     $routeProvider

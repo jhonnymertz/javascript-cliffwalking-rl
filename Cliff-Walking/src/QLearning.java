@@ -12,7 +12,6 @@ public class QLearning {
         rl.setEpisodes(100);
 
         rl.runTrial();
-
     }
 
 

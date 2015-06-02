@@ -1,32 +1,67 @@
-<h1>Q-Learning - Cliff Walking</h1>
+<h1 class="text-center">Q-Learning - Cliff Walking</h1>
 
+<div class="row">
+  <div class="col-lg-3">
+
+    <h3 class="text-center">Parâmetros</h3>
 <form>
   <div class="form-group">
     <label for="episodes">Número de episódios</label>
-    <input type="text" class="form-control" id="episodes" placeholder="Episódios" ng-model="episodes">
+    <input type="text" class="form-control" id="episodes" placeholder="Episódios" ng-model="config.episodes">
   </div>
   <div class="form-group">
+    <label for="Alpha">Alpha</label>
+    <input type="text" class="form-control" id="Alpha" placeholder="Alpha" ng-model="config.alpha">
+  </div>
+  <div class="form-group">
+    <label for="Gamma">Gamma</label>
+    <input type="text" class="form-control" id="Gamma" placeholder="Gamma" ng-model="config.gamma">
+  </div>
+  <div class="form-group">
+    <label for="Epsilon">Epsilon</label>
+    <input type="text" class="form-control" id="Epsilon" placeholder="Epsilon" ng-model="config.epsilon">
+  </div>
+  <div class="form-group">
+    <label for="temp">Temp</label>
+    <input type="text" class="form-control" id="temp" placeholder="temp" ng-model="config.temp">
+  </div>
+  <div class="form-group">
+    <label for="maxsteps">Máximo de passos</label>
+    <input type="text" class="form-control" id="maxsteps" placeholder="Máximo de passos" ng-model="config.maxSteps">
+  </div>
+  <div class="form-group">
+    <label>Método de escolha de ação:</label>
+    <div class="radio">
       <label>
-        <input type="radio" ng-model="method" value="egreedy">
-        epsilon-Guloso
-      </label><br/>
+        <input type="radio" name="optionsRadios" id="optionsRadios1" ng-model="config.method" value="egreedy">
+        epsilon-Greedy
+      </label>
+    </div>
+    <div class="radio">
       <label>
-        <input type="radio" ng-model="method" value="greedy">
-        Guloso
-      </label><br/>
+        <input type="radio" name="optionsRadios" id="optionsRadios2" ng-model="config.method" value="greedy">
+        Greedy
+      </label>
+    </div>
+    <div class="radio">
       <label>
-        <input type="radio" ng-model="method" value="softmax">
+        <input type="radio" name="optionsRadios" id="optionsRadios3" ng-model="config.method" value="softmax">
         Softmax
-      </label><br/>
+      </label>
+    </div>
   </div>
   <button type="button" class="btn btn-default" ng-click="execute()">Executar</button>
 </form>
-
-<highchart id="chart1" config="chartConfig"></highchart>
+  </div>
+  <div class="col-lg-9">
+    <h3 class="text-center">Resultado:</h3>
 
 <p class="lead">
-  {{rl}}
+  <highchart id="chart1" config="chartConfig"></highchart>
 </p>
+
+  </div>
+  </div>
 
 <div class="row marketing">
 

@@ -52,7 +52,7 @@ public class CliffWalking {
         CliffWalking cw = new CliffWalking(12, 4);
         // solution2.CliffWalking cw = new solution2.CliffWalking(4, 6);
         //solution2.CliffWalking cw = new solution2.CliffWalking(3, 6);
-        HashMap<String, HashMap<String, Double>> qQL = cw.QLearning(0.01, 0.5, 1.0, 1000);
+        HashMap<String, HashMap<String, Double>> qQL = cw.QLearning(0.01, 0.5, 1.0, 20);
         cw.printPolicy(qQL);
 
 
@@ -89,7 +89,7 @@ public class CliffWalking {
             } else {
                 oldProb += exploreProb;
             }
-            System.out.printf("%f\n", oldProb);
+            //System.out.printf("%f\n", oldProb);
             probs.add(oldProb);
             actions.add(action);
         }
@@ -136,6 +136,7 @@ public class CliffWalking {
             cs.reset();
             String s = cs.getState();
             int rs = 0;
+            int steps = 0;
             while (!cs.terminate()) {
                 String a = etaGreedy(q.get(s), eta);
                 cs.action(a);
@@ -147,12 +148,14 @@ public class CliffWalking {
                 q.put(s, qa);
                 s = s_n;
                 rs += r;
-                System.out.printf("%d: %s-%s %f\n", i, s, a, qav);
+                steps++;
+                //System.out.printf("%d: %s-%s %f\n", i, s, a, qav);
             }
+            System.out.println(steps);
             if (i == (n - 1)) {
-                System.out.printf("%d\n", rs);
+                //System.out.printf("%d\n", rs);
             } else {
-                System.out.printf("%d, ", rs);
+                //System.out.printf("%d, ", rs);
             }
         }
         return q;
