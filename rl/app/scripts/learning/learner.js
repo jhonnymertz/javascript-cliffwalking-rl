@@ -3,6 +3,9 @@
  */
 
 function RLearner(rlWorld, config) {
+
+  angular.extend(this, config);
+
   // Getting the world from the invoking method.
   this.thisWorld = rlWorld;
 
@@ -12,15 +15,7 @@ function RLearner(rlWorld, config) {
   // Initializing the policy with the initial values defined by the world.
   this.policy.initValues(this.thisWorld.getInitValues());
 
-  // set default values
-  this.epsilon = config.epsilon;
 
-  this.alpha = config.alpha;
-  this.gamma = config.gamma;
-
-  this.episodes = config.episodes;
-  this.method = config.method;
-  this.temp = config.temp;
   this.explorations = 0;
 
   console.log("RLearner initialised");
@@ -34,10 +29,10 @@ RLearner.prototype.setEpisodes = function (episodes) {
 RLearner.prototype.runTrial = function () {
 
   var chartData = [{
-      name: 'Falls',
+      name: 'Quedas',
       data: []
     }, {
-        name: 'Steps',
+        name: 'Passos',
         data: []
       }];
 
@@ -45,6 +40,9 @@ RLearner.prototype.runTrial = function () {
   for (var i = 0; i < this.episodes; i++) {
     console.log("Running " + i + " episode");
     var info = this.runEpisode();
+    while(info.steps > this.maxSteps){
+      info = this.runEpisode();
+    }
     console.log(info.steps + " steps and " + info.falls + " falls for " + i + " episode");
     chartData[0].data.push(info.falls);
     chartData[1].data.push(info.steps);
@@ -85,6 +83,7 @@ RLearner.prototype.runEpisode = function () {
 
     if(this.thisWorld.isInCliff(this.newstate)) {
       this.state = this.thisWorld.resetState(this.state);
+      info.steps = 0;
       info.falls++;
       continue;
     }
@@ -357,10 +356,8 @@ function LearnService() {
 
   function execute(config){
     var rl = new RLearner(new CliffWorld(), config);
-    var data = rl.runTrial();
-
-    console.log(rl);
-
+    var data = {info: rl.runTrial()};
+    data.rl = rl;
     return data;
   };
 };

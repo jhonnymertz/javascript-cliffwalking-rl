@@ -4,29 +4,13 @@
   <div class="col-lg-3">
 
     <h3 class="text-center">Parâmetros</h3>
-<form>
+<form class="well">
   <div class="form-group">
-    <label for="episodes">Número de episódios</label>
+    <label for="episodes">Número de episódios:</label>
     <input type="text" class="form-control" id="episodes" placeholder="Episódios" ng-model="config.episodes">
   </div>
   <div class="form-group">
-    <label for="Alpha">Alpha</label>
-    <input type="text" class="form-control" id="Alpha" placeholder="Alpha" ng-model="config.alpha">
-  </div>
-  <div class="form-group">
-    <label for="Gamma">Gamma</label>
-    <input type="text" class="form-control" id="Gamma" placeholder="Gamma" ng-model="config.gamma">
-  </div>
-  <div class="form-group">
-    <label for="Epsilon">Epsilon</label>
-    <input type="text" class="form-control" id="Epsilon" placeholder="Epsilon" ng-model="config.epsilon">
-  </div>
-  <div class="form-group">
-    <label for="temp">Temp</label>
-    <input type="text" class="form-control" id="temp" placeholder="temp" ng-model="config.temp">
-  </div>
-  <div class="form-group">
-    <label for="maxsteps">Máximo de passos</label>
+    <label for="maxsteps">Máximo de passos:</label>
     <input type="text" class="form-control" id="maxsteps" placeholder="Máximo de passos" ng-model="config.maxSteps">
   </div>
   <div class="form-group">
@@ -34,7 +18,7 @@
     <div class="radio">
       <label>
         <input type="radio" name="optionsRadios" id="optionsRadios1" ng-model="config.method" value="egreedy">
-        epsilon-Greedy
+        &epsilon;-Greedy
       </label>
     </div>
     <div class="radio">
@@ -50,15 +34,70 @@
       </label>
     </div>
   </div>
-  <button type="button" class="btn btn-default" ng-click="execute()">Executar</button>
+  <div class="form-group">
+    <label for="Alpha">&alpha;:</label>
+    <input type="text" class="form-control" id="Alpha" ng-model="config.alpha">
+  </div>
+  <div class="form-group">
+    <label for="Gamma">&gamma;:</label>
+    <input type="text" class="form-control" id="Gamma" ng-model="config.gamma">
+  </div>
+  <div class="form-group" ng-if="config.method == 'egreedy'">
+    <label for="Epsilon">&epsilon;:</label>
+    <input type="text" class="form-control" id="Epsilon" ng-model="config.epsilon">
+  </div>
+  <div class="form-group" ng-if="config.method == 'softmax'">
+    <label for="temp">&tau;:</label>
+    <input type="text" class="form-control" id="temp" ng-model="config.temp">
+  </div>
+
+
+  <button type="button" class="btn btn-default btn-success" ng-click="execute()">Executar</button>
+  <button type="button" class="btn btn-default" ng-click="default()">Limpar</button>
 </form>
   </div>
   <div class="col-lg-9">
-    <h3 class="text-center">Resultado:</h3>
 
-<p class="lead">
-  <highchart id="chart1" config="chartConfig"></highchart>
-</p>
+  <highchart id="chart1" config="chartConfig" ng-show="results"></highchart>
+
+    <div class="row" ng-if="results">
+      <div class="col-lg-6">
+        <h4>UP</h4>
+        <table class="table table-condensed">
+          <tbody>
+          <tr ng-repeat="row in results.rl.policy.qValuesTable">
+            <th scope="row" ng-repeat="column in row">{{column[0].toFixed(2)}}</th>
+          </tr>
+          </tbody>
+        </table>
+        <h4>RIGHT</h4>
+        <table class="table table-condensed">
+          <tbody>
+          <tr ng-repeat="row in results.rl.policy.qValuesTable">
+            <th scope="row" ng-repeat="column in row">{{column[1].toFixed(2)}}</th>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col-lg-6">
+        <h4>DOWN</h4>
+        <table class="table table-condensed">
+          <tbody>
+          <tr ng-repeat="row in results.rl.policy.qValuesTable">
+            <th scope="row" ng-repeat="column in row">{{column[2].toFixed(2)}}</th>
+          </tr>
+          </tbody>
+        </table>
+        <h4>LEFT</h4>
+        <table class="table table-condensed">
+          <tbody>
+          <tr ng-repeat="row in results.rl.policy.qValuesTable">
+            <th scope="row" ng-repeat="column in row">{{column[3].toFixed(2)}}</th>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
   </div>
   </div>
