@@ -58,3 +58,15 @@ body {
 .marketing p + h4 {
   margin-top: 28px;
 }
+
+td
+{
+  text-align:center;
+  vertical-align:middle;
+}
+
+th
+{
+  text-align:center;
+  vertical-align:middle;
+}

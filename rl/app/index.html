@@ -20,13 +20,112 @@
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
 
-    <div class="container">
-    <div ng-view=""></div>
+    <div class="container" ng-controller="MainCtrl">
+    <div>
+      <div class="row">
+        <div class="col-lg-3">
+
+          <h3 class="text-center">Parâmetros</h3>
+          <form class="well">
+            <div class="form-group">
+              <p><b>Configuração do mundo</b>: 12x4</p>
+              <p><b>Ações possíveis</b>: cima, baixo, esquerda e direita</p>
+            </div>
+            <div class="form-group">
+              <label for="episodes">Número de episódios:</label>
+              <input type="number" class="form-control" id="episodes" placeholder="Episódios" ng-model="config.episodes">
+            </div>
+            <div class="form-group">
+              <label for="maxsteps">Máximo de passos:</label>
+              <input type="number" class="form-control" id="maxsteps" placeholder="Máximo de passos" ng-model="config.maxSteps">
+            </div>
+            <div class="form-group">
+              <label>Método de escolha de ação:</label>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="optionsRadios" id="optionsRadios0" ng-model="config.method" value="random">
+                  Aleatório
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="optionsRadios" id="optionsRadios1" ng-model="config.method" value="egreedy">
+                  &epsilon;-Guloso
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="optionsRadios" id="optionsRadios2" ng-model="config.method" value="greedy">
+                  Guloso
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="optionsRadios" id="optionsRadios3" ng-model="config.method" value="softmax">
+                  Softmax
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="Gamma">&gamma;:</label>
+              <input type="number" class="form-control" id="Gamma" ng-model="config.gamma">
+            </div>
+            <div class="form-group" ng-if="config.method == 'egreedy'">
+              <label for="Epsilon">&epsilon;:</label>
+              <input type="number" class="form-control" id="Epsilon" ng-model="config.epsilon">
+            </div>
+            <div class="form-group" ng-if="config.method == 'softmax'">
+              <label for="temp">&tau;:</label>
+              <input type="number" class="form-control" id="temp" ng-model="config.temp">
+            </div>
+
+            <button type="button" class="btn btn-default btn-success" ng-click="execute()">Executar</button>
+            <button type="button" class="btn btn-default" ng-click="default()">Limpar</button>
+          </form>
+        </div>
+        <div class="col-lg-9">
+
+          <highchart id="chart1" config="chartConfig" ng-show="results"></highchart>
+
+        </div>
+      </div>
+      <div class="row" ng-if="results">
+        <h4>Tabela de Ações - Estados</h4>
+        <table class="table table-condensed">
+          <tbody>
+          <tr ng-repeat="column in [0,1,2,3] | reverse">
+            <th scope="row" ng-repeat="row in results.rl.policy.qValuesTable">
+              <table class="table table-condensed table-bordered">
+                <thead>
+                <th colspan="2" style="background-color: #f9f9f9;">E: {{$index}}, {{column}}</th>
+                </thead>
+                <tbody>
+                <tr>
+                  <td colspan="2">{{row[column][0].toFixed(2)}}<span class="glyphicon glyphicon-arrow-up" ng-show="max(row[column], row[column][0])"></span></td>
+                </tr>
+                <tr>
+                  <td>{{row[column][3].toFixed(2)}}<span class="glyphicon glyphicon-arrow-left" ng-show="max(row[column], row[column][3])"></span></td>
+                  <td>{{row[column][1].toFixed(2)}}<span class="glyphicon glyphicon-arrow-right" ng-show="max(row[column], row[column][1])"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="2">{{row[column][2].toFixed(2)}}<span class="glyphicon glyphicon-arrow-down" ng-show="max(row[column], row[column][2])"></span></td>
+                </tr>
+                </tbody>
+              </table>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
     </div>
 
     <div class="footer">
       <div class="container">
-        <p>Trabalho de Aprendizagem de máquina</p>
+        <p>Implementação do algoritmo de aprendizagem por reforço Q-Learning</p>
+        <p>Jhonny Marcos Acordi Mertz</p>
+        <p>Relatório Técnico - CMP 263 - Aprendizagem de Máquina</p>
+        <p>Prof. Dr. Paulo Martins Engel</p>
       </div>
     </div>
 
@@ -35,12 +134,6 @@
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="bower_components/angular-animate/angular-animate.js"></script>
-    <script src="bower_components/angular-cookies/angular-cookies.js"></script>
-    <script src="bower_components/angular-resource/angular-resource.js"></script>
-    <script src="bower_components/angular-route/angular-route.js"></script>
-    <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
-    <script src="bower_components/angular-touch/angular-touch.js"></script>
     <script src="bower_components/underscore/underscore.js"></script>
     <script src="bower_components/highcharts-ng/dist/highcharts-ng.js"></script>
     <script src="bower_components/highcharts/highcharts.js"></script>

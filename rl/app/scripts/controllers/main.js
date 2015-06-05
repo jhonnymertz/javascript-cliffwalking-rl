@@ -11,10 +11,10 @@ angular.module('rlApp')
   .controller('MainCtrl', function ($scope, $timeout, LearnService) {
 
     var configDefault = {
-      episodes: 0,
+      episodes: 500,
       epsilon: 0.1,
-      alpha: 1, // For cliffWorld alpha = 1 is good
-      gamma: 0.1, // For cliffWorld gamma = 0.1 is a good choice.
+      //alpha: 1, // For cliffWorld alpha = 1 is good
+      gamma: 1, // For cliffWorld gamma = 0.1 is a good choice.
       method: 'egreedy',
       temp: 1,
       maxSteps: 440
@@ -44,9 +44,8 @@ angular.module('rlApp')
               padding: 10,
               fontWeight: 'bold'
             },
-            formatter: function() {
-              return '<b>' + this.series.name + ': ' + this.point.y + '<br>Episódio: ' + this.point.x + '</b>';
-            }
+            crosshairs: true,
+            shared: true
           },
           plotOptions: {
             line: {
@@ -65,7 +64,7 @@ angular.module('rlApp')
           text: 'Desempenho'
         },
         subtitle: {
-          text: 'Taxa de passos por simulação'
+          text: 'Taxas por episódio'
         },
         //Boolean to control showng loading status on chart (optional)
         //Could be a string if you want to show specific loading text.
@@ -85,6 +84,16 @@ angular.module('rlApp')
         }
       };
 
+    };
+
+    $scope.max = function(qValues, qValue){
+      var max = _.max(qValues, function(value){
+        if(value != 0)
+          return value;
+        else return -Infinity;
+      });
+
+      return max == qValue && qValue != 0;
     };
 
 

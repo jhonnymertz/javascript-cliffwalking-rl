@@ -15,14 +15,7 @@ function RLearner(rlWorld, config) {
   // Initializing the policy with the initial values defined by the world.
   this.policy.initValues(this.thisWorld.getInitValues());
 
-
-  this.explorations = 0;
-
   console.log("RLearner initialised");
-};
-
-RLearner.prototype.setEpisodes = function (episodes) {
-  this.episodes = episodes;
 };
 
 // execute one trial
@@ -34,18 +27,20 @@ RLearner.prototype.runTrial = function () {
     }, {
         name: 'Passos',
         data: []
-      }];
+      },
+    {
+      name: 'Explorações',
+      data: []
+    }];
 
   console.log("Learning! (" + this.episodes + " episodes)\n");
   for (var i = 0; i < this.episodes; i++) {
     console.log("Running " + i + " episode");
     var info = this.runEpisode();
-    while(info.steps > this.maxSteps){
-      info = this.runEpisode();
-    }
     console.log(info.steps + " steps and " + info.falls + " falls for " + i + " episode");
     chartData[0].data.push(info.falls);
     chartData[1].data.push(info.steps);
+    chartData[2].data.push(info.explorations);
   }
 
   return chartData;
@@ -56,7 +51,7 @@ RLearner.prototype.runEpisode = function () {
 
   // Reset state to start position defined by the world.
 
-  this.state = this.thisWorld.resetState([]);
+  this.state = this.thisWorld.resetState();
 
   var this_Q;
   var max_Q;
@@ -67,32 +62,111 @@ RLearner.prototype.runEpisode = function () {
       falls: 0
     };
 
+  this.explorations = 0;
 
   while (!this.thisWorld.endState(this.state)) {
 
+    this.alpha = 1 / (1 + info.steps);
+
     this.action = this.selectAction(this.state);
+    this_Q = this.policy.getQValue(this.state, this.action);
+
     this.newstate = this.thisWorld.getNextState(this.state, this.action);
     this.reward = this.thisWorld.getReward(this.newstate);
-
-    this_Q = this.policy.getQValue(this.state, this.action);
-    max_Q = this.policy.getMaxQValue(this.newstate);
+    max_Q = this.policy.getMaxQValue(this.newstate, this.thisWorld.validAction);
 
     // Calculate new Value for Q
     new_Q = this_Q + this.alpha * (this.reward + this.gamma * max_Q - this_Q);
     this.policy.setQValue(this.state, this.action, new_Q);
 
     if(this.thisWorld.isInCliff(this.newstate)) {
-      this.state = this.thisWorld.resetState(this.state);
+      this.state = this.thisWorld.resetState();
       info.steps = 0;
       info.falls++;
       continue;
     }
 
-    // Set state to the new state.
+    if(info.steps > this.maxSteps){
+      this.state = this.thisWorld.resetState();
+      info.steps = 0;
+      this.explorations = 0;
+      continue;
+    }
+
     this.state = this.newstate;
     info.steps++;
   }
+  info.explorations = this.explorations;
   return info;
+};
+
+RLearner.prototype.softmax = function(qValues, state){
+  var action;
+  var prob = [];
+  var sumProb = 0;
+  var selectedAction;
+
+  for (action = 0; action < qValues.length; action++) {
+    prob[action] = Math.exp(qValues[action] / this.temp);
+    sumProb += prob[action];
+  }
+  for (action = 0; action < qValues.length; action++)
+    prob[action] = prob[action] / sumProb;
+
+  var valid = false;
+  var rndValue;
+  var offset;
+
+  while (!valid) {
+
+    rndValue = Math.random();
+    offset = 0;
+
+    for (action = 0; action < qValues.length; action++) {
+      if (rndValue > offset && rndValue < offset + prob[action])
+        selectedAction = action;
+      offset += prob[action];
+      //console.log("Action " + action + " chosen with " + prob[action]);
+    }
+
+    if (this.thisWorld.validAction(state, selectedAction))
+      valid = true;
+  }
+
+  return selectedAction;
+};
+
+RLearner.prototype.greedy = function(qValues, state){
+  var maxQ = -Infinity;
+  var doubleValues = [];
+  var selectedAction;
+
+  for (var action = 0; action < qValues.length; action++) {
+    if (qValues[action] > maxQ && this.thisWorld.validAction(state, action)) {
+      selectedAction = action;
+      maxQ = qValues[action];
+      doubleValues = [];
+      doubleValues.push(selectedAction);
+    } else if (qValues[action] == maxQ && this.thisWorld.validAction(state, action)) {
+      doubleValues.push(action);
+    }
+  }
+
+  if (doubleValues.length > 0) {
+    selectedAction = _.sample(doubleValues);//_.find(doubleValues, function(action){ return this.thisWorld.validAction(state, action); }, this);
+  }
+
+  return selectedAction;
+};
+
+RLearner.prototype.random = function(qValues, state) {
+  // Choose new action if not valid.
+  var selectedAction = _.random(0, qValues.length - 1);
+  while (!this.thisWorld.validAction(state, selectedAction)) {
+    selectedAction = _.random(0, qValues.length - 1);
+    //console.log("Invalid action, new one:" + selectedAction);
+  }
+  return selectedAction;
 };
 
 RLearner.prototype.selectAction = function (state) {
@@ -101,121 +175,23 @@ RLearner.prototype.selectAction = function (state) {
   var selectedAction = -1;
 
   switch (this.method) {
-
+    case 'random':
+      selectedAction = this.random(qValues, state);
+      break;
     case 'egreedy':
     {
-      var maxQ = -Number.MAX_VALUE;
-      var doubleValues = [];
-      var maxDV = 0;
-
       //Explore
       if (Math.random() < this.epsilon) {
         //console.log("Exploring ...");
-        selectedAction = Math.floor(Math.random() * qValues.length);
         this.explorations++;
+        selectedAction = this.random(qValues, state);
       } else {
-        for (var action = 0; action < qValues.length; action++) {
-          if (qValues[action] > maxQ) {
-            selectedAction = action;
-            maxQ = qValues[action];
-            maxDV = 0;
-            doubleValues = [];
-            doubleValues[maxDV] = selectedAction;
-          } else if (qValues[action] == maxQ) {
-            maxDV++;
-            doubleValues[maxDV] = action;
-          }
-        }
-
-        if (maxDV > 0) {
-          for (var action = 0; action < doubleValues.length; action++) {
-            var randomIndex = Math.floor(Math.random() * (maxDV + 1));
-            selectedAction = doubleValues[randomIndex];
-            if(this.thisWorld.validAction(state, selectedAction))
-              break;
-          }
-        }
-      }
-
-      // Choose new action if not valid.
-      while (!this.thisWorld.validAction(state, selectedAction)) {
-        selectedAction = Math.floor(Math.random() * qValues.length);
-        //console.log("Invalid action, new one:" + selectedAction);
-      }
-
-      break;
-    }
-
-    case 'greedy':
-    {
-      var maxQ = -Number.MAX_VALUE;
-      var doubleValues = [];
-      var maxDV = 0;
-
-      for (var action = 0; action < qValues.length; action++) {
-        if (qValues[action] > maxQ) {
-          selectedAction = action;
-          maxQ = qValues[action];
-          maxDV = 0;
-          doubleValues = [];
-          doubleValues[maxDV] = selectedAction;
-        } else if (qValues[action] == maxQ) {
-          maxDV++;
-          doubleValues[maxDV] = action;
-        }
-      }
-
-      if (maxDV > 0) {
-        for (var action = 0; action < doubleValues.length; action++) {
-          var randomIndex = Math.floor(Math.random() * (maxDV + 1));
-          selectedAction = doubleValues[randomIndex];
-          if(this.thisWorld.validAction(state, selectedAction))
-            break;
-        }
-      }
-
-      // Choose new action if not valid.
-      while (!this.thisWorld.validAction(state, selectedAction)) {
-        selectedAction = Math.floor(Math.random() * qValues.length);
+        selectedAction = this.greedy(qValues, state);
       }
       break;
     }
-
-    case 'softmax':
-    {
-
-      var action;
-      var prob = [];
-      var sumProb = 0;
-
-      for (action = 0; action < qValues.length; action++) {
-        prob[action] = Math.exp(qValues[action] / this.temp);
-        sumProb += prob[action];
-      }
-      for (action = 0; action < qValues.length; action++)
-        prob[action] = prob[action] / sumProb;
-
-      var valid = false;
-      var rndValue;
-      var offset;
-
-      while (!valid) {
-
-        rndValue = Math.random();
-        offset = 0;
-
-        for (action = 0; action < qValues.length; action++) {
-          if (rndValue > offset && rndValue < offset + prob[action])
-            selectedAction = action;
-          offset += prob[action];
-          //console.log("Action " + action + " chosen with " + prob[action]);
-        }
-
-        if (this.thisWorld.validAction(state, selectedAction))
-          valid = true;
-      }
-      break;
-    }
+    case 'greedy': selectedAction = this.greedy(qValues, state); break;
+    case 'softmax': selectedAction = this.softmax(qValues, state); break;
   };
   return selectedAction;
 };
@@ -258,8 +234,12 @@ RLPolicy.prototype.setQValue = function (state, action, newQValue) {
   this.qValuesTable[state[0]][state[1]][action] = newQValue;
 };
 
-RLPolicy.prototype.getMaxQValue = function (state) {
-  return Math.max.apply(null, this.qValuesTable[state[0]][state[1]]);
+RLPolicy.prototype.getMaxQValue = function (state, validAction) {
+  return _.max(_.filter(this.qValuesTable[state[0]][state[1]], function(value, index){
+    return validAction(state, index);
+  }, validAction), function(value){
+    return value;
+  });
 };
 
 RLPolicy.prototype.getQValue = function (state, action) {
@@ -268,10 +248,10 @@ RLPolicy.prototype.getQValue = function (state, action) {
 
 function CliffWorld() {
   // Actions.
-  this.UP = 0;
-  this.RIGHT = 1;
-  this.DOWN = 2;
-  this.LEFT = 3;
+  //this.UP = 0;
+  //this.RIGHT = 1;
+  //this.DOWN = 2;
+  //this.LEFT = 3;
 
   // dimension: { x, y, actions }
   this.dimSize = [12, 4, 4];
@@ -286,34 +266,37 @@ CliffWorld.prototype.getNextState = function (state, action) {
   var newstate = (JSON.parse(JSON.stringify(state)));
 
   // UP-LEFT corner in coordinates 0,0
-  if (action == this.UP)
+  if (action == 0)
     newstate[1]++;
-  else if (action == this.RIGHT)
+  else if (action == 1)
     newstate[0]++;
-  else if (action == this.DOWN)
+  else if (action == 2)
     newstate[1]--;
-  else if (action == this.LEFT)
+  else if (action == 3)
     newstate[0]--;
   return newstate;
+};
+
+CliffWorld.prototype.isInBoard = function (state) {
+  if (state[0] < 0 || state[0] > 11 || state[1] > 3 || state[1] < 0)
+    return false;
+  else return true;
 };
 
 CliffWorld.prototype.validAction = function (state, action) {
 
   // West border
-  if (state[0] == 0 && action == this.LEFT)
+  if (state[0] == 0 && action == 3)
     return false;
   // East border
-  else if (state[0] == 11 && action == this.RIGHT)
+  else if (state[0] == 11 && action == 1)
     return false;
   // North border
-  else if (state[1] == 3 && action == this.UP)
+  else if (state[1] == 3 && action == 0)
     return false;
   // South border
-  else if (state[1] == 0 && action == this.DOWN)
+  else if (state[1] == 0 && action == 2)
     return false;
-  // Cliff
-  //else if (state[0] > 0 && state[0] < 11 && state[1] == 1 && action == this.DOWN)
-  //return false;
   else return true;
 };
 
@@ -333,7 +316,7 @@ CliffWorld.prototype.getReward = function (state) {
 
   //Final state
   if (this.endState(state))
-    return 0;
+    return 1;
 
   return -1;
 };
@@ -343,7 +326,7 @@ CliffWorld.prototype.resetState = function () {
 };
 
 CliffWorld.prototype.getInitValues = function () {
-  return -1.5;
+  return 0;
 };
 
 function LearnService() {
