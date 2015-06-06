@@ -9,7 +9,7 @@ public class QLearning {
     public static void main(String args[]) {
 
         RLearner rl = new RLearner(new CliffWorld());
-        rl.setEpisodes(100);
+        rl.setEpisodes(200);
 
         rl.runTrial();
     }
